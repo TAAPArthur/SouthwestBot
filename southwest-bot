@@ -1,0 +1,18 @@
+#!/bin/bash
+
+cd "/usr/lib/southwest-bot/"
+case $1 in 
+    scan)
+        python southwest.py
+        ;;
+    bot)
+        python southwestMessenger.py
+        ;;
+    checkin)
+        shift
+        python southwest.py $@
+        ;;
+    send-message)
+        python southwestMessenger.py $@
+        ;;
+esac

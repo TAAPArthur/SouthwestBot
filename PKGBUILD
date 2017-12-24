@@ -18,7 +18,11 @@ _srcDir="SouthwestBot"
 
 package() {
 
-  cd "$_srcDir"
-  mkdir -p "$pkgdir/usr/bin/SouthwestBot"
-  mv SouthwestBot "$pkgdir/usr/bin/SouthwestBot"
+    cd "$_srcDir"
+    echo "$pkgdir/usr/lib/$pkgname/"
+    mkdir -p "$pkgdir/usr/bin/"
+    mkdir -p "$pkgdir/usr/lib/$pkgname/"
+    
+    install -D -m 0755 southwest-bot "$pkgdir/usr/bin/"
+    install -D -m 0755 *.py "$pkgdir/usr/lib/$pkgname/"  
 }
