@@ -3,7 +3,7 @@ from telegram.ext import Updater
 from telegram.ext import CommandHandler
 import telegram
 import sys
-import southwestRecords import Records,Flight,User,ScannedFlight,setCheckinTimer
+from southwestRecords import Records,Flight,User,ScannedFlight,setCheckinTimer
 from token import TOKEN
 
 
