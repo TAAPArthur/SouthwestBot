@@ -5,14 +5,24 @@ from os import system
 class Records:
     conn = mysql.connector.connect(user='southwest', database='Southwest')
     cur = conn.cursor(buffered=True)
+    def setUser(self,user):
+        query="REPLACE INTO Users VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        self.cur.execute(query,user.getTuple())
+    def getUser(self,chatID):
+        query="SELECT  Users.ID, `Username`, `Password`, `FirstName`, `LastName`, `TelegramChatID`, `StartDateDefaultDelta`, `EndDateDefaultDelta`, `PriceDelta`, `MinPrice` FROM `Users` WHERE TelegramChatID=%s LIMIT 1"
+        self.cur.execute(query,(chatID,))
+        for row in self.cur:
+            return self._createUser(row)
     def getUsers(self):
         query="SELECT  Users.ID, `Username`, `Password`, `FirstName`, `LastName`, `TelegramChatID`, `StartDateDefaultDelta`, `EndDateDefaultDelta`, `PriceDelta`, `MinPrice` FROM `Users` "
         self.cur.execute(query)
         users=[]
-        for userID,username,password,firstName,lastName,chatID, defaultDeltaStart,defaultDeltaEnd,priceDelta,minPrice in self.cur:
-            users.append(User(userID,username,password,firstName,lastName,chatID, defaultDeltaStart,defaultDeltaEnd,priceDelta,minPrice))
+        for row in self.cur:
+            users.append(self._createUser(row))
         return users
-        
+    def _createUser(self,args):
+        userID,username,password,firstName,lastName,chatID, defaultDeltaStart,defaultDeltaEnd,priceDelta,minPrice=args
+        return User(userID,username,password,firstName,lastName,chatID, defaultDeltaStart,defaultDeltaEnd,priceDelta,minPrice)
         
     def getSavedUpComingFlights(self,userID):
         query="SELECT FlightNumber, DepartureTime,Price,StartDate,EndDate FROM UpcomingFlights WHERE UserID=%s AND DepartureTime > NOW()"
@@ -109,16 +119,20 @@ class User:
     def __init__(self,userID,username,password,firstName,lastName,chatID, defaultDeltaStart=7,defaultDeltaEnd=7,priceDelta=5,minPrice=2000):
         self.id=int(userID)
         self.username=username
-        self.password=str(password)
+        self.password=password
         self.firstName=firstName
         self.lastName=lastName
         self.chatID=chatID
-        self.defaultDeltaStart=defaultDeltaStart
-        self.defaultDeltaEnd=defaultDeltaEnd
-        self.priceDelta=priceDelta
-        self.minPrice=minPrice
+        self.defaultDeltaStart=float(defaultDeltaStart)
+        self.defaultDeltaEnd=float(defaultDeltaEnd)
+        self.priceDelta=float(priceDelta)
+        self.minPrice=float(minPrice)
+    def getTuple(self):
+        return self.id, self.username, self.password, self.firstName, self.lastName, self.chatID, self.defaultDeltaStart, self.defaultDeltaEnd, self.priceDelta, self.minPrice
     def __str__(self):
         return self.username
+    def whoami(self):
+        return "username:%s password:%s firstName:%s lastName:%s defaultDeltaStart:%s defaultDeltaEnd:%s priceDelta:%s minPrice:%s" % (self.username, self.password, self.firstName, self.lastName, self.defaultDeltaStart, self.defaultDeltaEnd, self.priceDelta, self.minPrice)
 
 def setCheckinTimer(confirmationNumber,firstName,lastName,time):
         return system("echo 'southwest-bot checkin %s %s %s %s' | at %s" % (confirmationNumber,firstName,lastName,time))
