@@ -4,9 +4,10 @@ from telegram.ext import CommandHandler
 import telegram
 import sys
 from southwestRecords import Records,Flight,User,ScannedFlight,setCheckinTimer
-from token import TOKEN
 
 
+TOKEN=open("token","r").read().strip()
+print("TOKEN ",TOKEN)
 def start(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id, text="Initlization complete. your chat id is %d" % update.message.chat_id)
 def id(bot, update):
