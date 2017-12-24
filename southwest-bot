@@ -5,7 +5,7 @@ case $1 in
     scan)
         python southwest.py
         ;;
-    bot)
+    listen)
         python southwestMessenger.py
         ;;
     checkin)

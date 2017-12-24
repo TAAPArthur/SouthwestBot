@@ -121,4 +121,4 @@ class User:
         return self.username
 
 def setCheckinTimer(confirmationNumber,firstName,lastName,time):
-        return system("echo 'southwest.py %s %s %s %s' | at %s" % (confirmationNumber,firstName,lastName,time))
+        return system("echo 'southwest-bot checkin %s %s %s %s' | at %s" % (confirmationNumber,firstName,lastName,time))
