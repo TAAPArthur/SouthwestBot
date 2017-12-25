@@ -127,11 +127,12 @@ class SouthwestBot:
                 flight=Flight(title=title,confirmationNumber=confirmationNumber, departureTime=departureTime,arrivalTime=arrivalTime,origin=origin,dest=dest,flightNumber=flightNumber, startDate=self.user.defaultDeltaStart,endDate=self.user.defaultDeltaEnd)         
                 if flight in savedUpComingFlights:
                     price,startDate,endDate=savedUpComingFlights[flight]
+                    print("Before",startDate,endDate)
                     if startDate==None:
                         startDate=self.user.defaultDeltaStart
                     if endDate==None:
                         endDate=self.user.defaultDeltaEnd
-                        
+                    print(startDate,endDate)
                     flight.setMetadata(price,startDate,endDate)
                 flights.append(flight)
                 

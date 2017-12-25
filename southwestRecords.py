@@ -30,6 +30,7 @@ class Records:
         savedUpComingFlights={}
         for flightNumber,departureTime,price,startDate,endDate in self.cur:
             savedUpComingFlights[Flight(flightNumber,departureTime=departureTime,arrivalTime=departureTime)]= price,startDate,endDate
+            print(price,startDate,endDate)
         return savedUpComingFlights
     
     def saveNewFlight(self,userID,flight):
@@ -77,7 +78,7 @@ class Flight:
         self.flightNumber=int(flightNumber)
         self.setMetadata(price,startDate,endDate)
         
-    def setMetadata(self,price,startDate=None,endDate=None):
+    def setMetadata(self,price,startDate,endDate):
         self.price=price
         self.startDate=startDate
         self.endDate=endDate
@@ -123,8 +124,8 @@ class User:
         self.firstName=firstName
         self.lastName=lastName
         self.chatID=chatID
-        self.defaultDeltaStart=float(defaultDeltaStart)
-        self.defaultDeltaEnd=float(defaultDeltaEnd)
+        self.defaultDeltaStart=defaultDeltaStart
+        self.defaultDeltaEnd=defaultDeltaEnd
         self.priceDelta=float(priceDelta)
         self.minPrice=float(minPrice)
     def getTuple(self):
