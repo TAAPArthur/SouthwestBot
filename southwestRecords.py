@@ -30,7 +30,6 @@ class Records:
         savedUpComingFlights={}
         for flightNumber,departureTime,price,startDate,endDate in self.cur:
             savedUpComingFlights[Flight(flightNumber,departureTime=departureTime,arrivalTime=departureTime)]= price,startDate,endDate
-            print(price,startDate,endDate)
         return savedUpComingFlights
     
     def saveNewFlight(self,userID,flight):
@@ -57,15 +56,15 @@ class Records:
         
     @staticmethod
     def convertToLocalTime(date,airport):
-        return date+datetime.timedelta(hour=getOffset(date,airport))
+        return date+timedelta(hours=Records.getOffset(date,airport))
     @staticmethod
     def getOffset(date,airport):
         if airport=="BOS":
-            return hour-1
+            return -1
         elif airport=="SOF":
-            return hour+2
+            return +2
         else:
-            return hour
+            return 0
             
 class Flight:
     def __init__(self,flightNumber,departureTime,arrivalTime,origin=None,dest=None, confirmationNumber=None,price=None,startDate=None,endDate=None,title=None):
@@ -84,8 +83,8 @@ class Flight:
         self.endDate=endDate
     def getIdentifier(self):
         return self.flightNumber,self.departureTime
-    def shouldSetCheckinTimer(self):        
-        return (convertToLocalTime(self.departureTime,self.origin)-datetime.now()).days==1
+    def shouldSetCheckinTimer(self,database=None):        
+        return (database.convertToLocalTime(self.departureTime,self.origin)-datetime.now()).days==1
     def setCheckinTimer(self,user):
         setCheckinTimer(self.confirmationNumber, user.firstName, user.lastName,user.id, self.departureTime.strftime("%H%M"))
     def __hash__(self):

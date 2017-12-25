@@ -8,6 +8,9 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import StaleElementReferenceException
+from selenium.webdriver.support.expected_conditions import _find_element
+
 
 from southwestRecords import Records,Flight,User,ScannedFlight
 from southwestMessenger import sendMessage
@@ -60,12 +63,9 @@ class SouthwestBot:
             i+=1
             time.sleep(1)
             if i==60:
-                self.output("could not checking")
+                self.output("could not checkin")
                 break
-    def autoCheckIn(self,flights):
-        for flight in flights:
-            if flight.shouldSetCheckinTimer():
-                flight.setCheckinTimer(self.user)
+        
     def waitForElementToLoad(self,id):
         element_present = EC.presence_of_element_located((By.ID, id))
         WebDriverWait(self.driver, self.timeout).until(element_present)
@@ -76,11 +76,27 @@ class SouthwestBot:
     def waitForElementToToBeClickableByClass(self,clazz):
         element_present = EC.element_to_be_clickable((By.CLASS_NAME, clazz))
         return WebDriverWait(self.driver, self.timeout).until(element_present)
+    def waitForElementToHaveTextByClass(self,clazz):
+        class text_to_be_present_in_element(object):
+            """ An expectation for checking if the given text is present in the
+            specified element.
+            locator, text
+            """
+            def __init__(self, locator):
+                self.locator = locator
+            def __call__(self, driver):
+                try:
+                    return _find_element(driver, self.locator).text
+                except StaleElementReferenceException:
+                    return False
+        element_present = text_to_be_present_in_element((By.CLASS_NAME, clazz))
+        return WebDriverWait(self.driver, self.timeout).until(element_present)
     
     def getRecentFlights(self,savedUpComingFlights):
         
         tripLinks=[]
         flights=[]
+        i=0
         while True:
             tripElements=self.driver.find_elements_by_class_name("upcoming-trip-details-list-link")
             for tripElement in tripElements:
@@ -92,16 +108,17 @@ class SouthwestBot:
                 self.waitForElementToToBeClickableByClass("js-right-arrow")
                 nextButton.click()
                 time.sleep(1)
+            i+=1
+            if i==60:
+                self.saveScreenshot("getRecentFlights.png")
+                self.output("could not get recent flights")
+                return[]
         for link in tripLinks:
             self.driver.get(link)
             self.output(link)
             
-            
-            while True:
-                confirmationNumber=self.driver.find_element_by_class_name("upcoming-details--confirmation-number").text
-                if confirmationNumber != "":
-                    break
-                time.sleep(1)
+            confirmationNumber=self.waitForElementToHaveTextByClass("upcoming-details--confirmation-number")
+            assert confirmationNumber!=""
             title=self.driver.find_element_by_class_name("upcoming-details--title").text
             rawDate=self.driver.find_elements_by_class_name("flight-details--date")
             
@@ -110,12 +127,8 @@ class SouthwestBot:
             lastRow=self.driver.find_elements_by_class_name("flight-details--row-last-child")
             assert len(rawDate)==len(firstRow)
             for i in range(len(rawDate)):
-                while True:
-                    date=rawDate[i].text.strip()
-                    if date != "":
-                        break
-                    time.sleep(1)
-                
+                date=rawDate[i].text.strip()
+                assert date != ""
                 
                 startTime=firstRow[i].find_element_by_class_name("flight-details--trip-time").text.strip()
                 endTime=lastRow[i].find_element_by_class_name("flight-details--trip-time").text.strip()
@@ -127,24 +140,23 @@ class SouthwestBot:
                 flight=Flight(title=title,confirmationNumber=confirmationNumber, departureTime=departureTime,arrivalTime=arrivalTime,origin=origin,dest=dest,flightNumber=flightNumber, startDate=self.user.defaultDeltaStart,endDate=self.user.defaultDeltaEnd)         
                 if flight in savedUpComingFlights:
                     price,startDate,endDate=savedUpComingFlights[flight]
-                    print("Before",startDate,endDate)
                     if startDate==None:
                         startDate=self.user.defaultDeltaStart
                     if endDate==None:
                         endDate=self.user.defaultDeltaEnd
-                    print(startDate,endDate)
                     flight.setMetadata(price,startDate,endDate)
+                print(flight)
                 flights.append(flight)
                 
         return flights
 
+    
     def getCheaperFlights(self,flight):
         def scanFlights(date,flight,newFlight,cheaperFlights):
-            while True:
-                rows=self.driver.find_elements_by_class_name("bugTableRow")
-                if len(rows)!=0:
-                    break
-                time.sleep(1)
+        
+            self.driver.find_element_by_class_name("bugTableRow")
+            rows=self.driver.find_elements_by_class_name("bugTableRow")
+            assert len(rows)!=0
                 
             reducedPriceOnFlight=False
             for row in rows:
@@ -214,6 +226,7 @@ class SouthwestBot:
         for date in flight.getDates()[1:]:
             if date > datetime.date(datetime.now()):
                 self.driver.get(self.flightSelectionPage % (date.month,date.day))
+                
                 scanFlights(date,flight,newFlight,cheaperFlights)
         return cheaperFlights,currentFlightReducedPrice
         
@@ -259,7 +272,13 @@ class SouthwestBot:
     def run(self,savedUpComingFlights):
         self.login()
         flights=self.getRecentFlights(savedUpComingFlights)
-        #self.autoCheckIn(flights)
+        self.output("found %d flights" % len(flights))
+        
+        for flight in flights:
+            if flight.shouldSetCheckinTimer(database):
+                self.output("Setting timer to check in for %s" % str(flight))
+                flight.setCheckinTimer(self.user)
+                
         for flight in flights:
             self.notifyUserOfCheaperFlights(flight)
             
