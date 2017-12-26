@@ -43,8 +43,8 @@ def whoami(bot,update):
     """
     print("whoami")
     user=getUser(update)
-    print(user)
-    update.message.reply_text(user.whoami() if user else "User not found")
+    if user:
+        update.message.reply_text(user.whoami())
         
 
 def setProperty(bot,update,args):
@@ -63,12 +63,11 @@ def setProperty(bot,update,args):
                     setattr(user,args[i],args[i+1])
             setUser(user)
             update.message.reply_text(user.whoami())
-        else:
-            update.message.reply_text("user not found")
 def scan(bot,update,args):
-    users=[getUser(update)]
-    loadCache = len(args)!=0 and args[0]!="false"
-    southwest.run(users,loadCache,scan=True)
+    user=getUser(update)
+    if user:
+        loadCache = len(args)!=0 and args[0]!="false"
+        southwest.run([user],loadCache,scan=True)
 
 def commandHelp(bot,update,args):
     """
@@ -91,6 +90,8 @@ def getUser(update):
     r=Records()
     user=r.getUser(update.message.chat_id)
     r.close()
+    if not user:
+        update.message.reply_text("User not found")
     return user
 def setUser(user):
     r=Records()

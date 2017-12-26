@@ -169,7 +169,7 @@ class SouthwestBot:
                 except:
                     self.output("could not parse %s as int" % prices[2].text)
                     continue
-                if price > user.minPrice or flight.price and flight.price-price<user.priceDelta:
+                if price > self.user.minPrice or flight.price and flight.price-price<self.user.priceDelta:
                     continue
                 startTime=row.find_element_by_class_name("depart_column").text
                 endTime=row.find_element_by_class_name("arrive_column").text[:8].strip()
