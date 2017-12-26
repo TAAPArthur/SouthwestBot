@@ -3,7 +3,7 @@ import re
 import sys
 import time
 from datetime import datetime,date,timedelta
-
+import traceback
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -13,7 +13,7 @@ from selenium.webdriver.support.expected_conditions import _find_element
 
 
 from southwestRecords import Records,Flight,User,ScannedFlight
-from southwestMessenger import sendMessage
+import southwestMessenger as SM
 
 
 class SouthwestBot:
@@ -22,7 +22,7 @@ class SouthwestBot:
     checkinPage="https://www.southwest.com/air/check-in/index.html"
     flightsPage="https://www.southwest.com/flight/"
     flightSelectionPage="https://www.southwest.com/flight/select-flight.html?newDepartDate=%d-%d&newReturnDate="
-    timeout=7
+    timeout=20
     
     
     
@@ -244,10 +244,11 @@ class SouthwestBot:
                 if flight.price==None:
                     flight.price=0
                 self.database.saveNewFlight(self.user.id,flight)
-        message=""
-        for cheaperFlight in cheaperFlights:
-            message+=(str(cheaperFlight)+"\n")
-        self.message(message)
+        if len(cheaperFlights)>0:
+            message="In relation to %s\n %d cheaperFlights found" % (str(flight),len(cheaperFlights))
+            for cheaperFlight in cheaperFlights:
+                message+=(str(cheaperFlight)+"\n")
+            self.message(message)
         if currentFlightReducedPrice:
             self.message("Your current flight's price has been reduced by $%d to $%d; Flight Info %s" % (previousPrice-currentFlightReducedPrice, currentFlightReducedPrice,str(flight)))
         
@@ -255,7 +256,7 @@ class SouthwestBot:
         if id ==None:
             id=self.user.chatID
         if len(message)>1 and id:
-            sendMessage(message,id)
+            SM.sendMessage(message,id)
         
     def saveScreenshot(self,fileName="screenshot.png"):
         self.output("saving screen shot to ",fileName)
@@ -269,34 +270,46 @@ class SouthwestBot:
         for i in range(1,len(message)):
             formattedMessage+=str(message[i])
         print (time,formattedMessage, flush=True)
-    
+    def screenshot(self,fileName="screenshot.png"):
+        self.output("saving screen shot to ",fileName)
+        self.driver.save_screenshot(fileName)
+        pass
     def run(self,savedUpComingFlights,checkin=True,scan=True):
-        self.login()
-        flights=self.getRecentFlights(savedUpComingFlights)
-        self.output("found %d flights" % len(flights))
-        
-        if checkin:
-            for flight in flights:
-                if flight.shouldSetCheckinTimer(self.database):
-                    self.output("Setting timer to check in for %s" % str(flight))
-                    flight.setCheckinTimer(self.user)
-        if scan:
-            for flight in flights:
-                self.notifyUserOfCheaperFlights(flight)
+        try:
+            self.login()
+            flights=self.getRecentFlights(savedUpComingFlights)
+            self.output("found %d flights" % len(flights))
+            
+            if checkin:
+                for flight in flights:
+                    if flight.shouldSetCheckinTimer(self.database):
+                        self.output("Setting timer to check in for %s" % str(flight))
+                        flight.setCheckinTimer(self.user)
+            if scan:
+                for flight in flights:
+                    self.notifyUserOfCheaperFlights(flight)
+        except:
+            self.output("Failed to run with %s " % self.user.username)
+            self.screenshot("/home/syncrop/%s.png" % self.user.username)
+            traceback.print_exc()
+            traceback.print_stack()
 
 
 def run(users=None,loadCache=True,checkin=True,scan=True):
-    
-    database=Records()
-    if not users:
-        users=database.getUsers()
 
-    bot=SouthwestBot(database,loadCache)
-    for user in users:
+    
+        database=Records()
+        if not users:
+            users=database.getUsers()
+
+        bot=SouthwestBot(database,loadCache)
+        for user in users:
             bot.setUser(user)
             bot.run(database.getSavedUpComingFlights(user.id),checkin,scan)
             database.commit()
-    database.close()
+                
+        database.close()
+    
 if __name__ == "__main__":
     if len(sys.argv)==4:
         bot=SouthwestBot()

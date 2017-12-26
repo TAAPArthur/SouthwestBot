@@ -7,8 +7,7 @@ import sys
 from southwestRecords import Records,Flight,User,ScannedFlight,setCheckinTimer
 import southwest
 import logging
-logging.basicConfig(level=logging.ERROR,
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+#logging.basicConfig(level=logging.ERROR,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 
 TOKEN=open("token","r").read().strip()
@@ -68,6 +67,7 @@ def scan(bot,update,args):
     if user:
         loadCache = len(args)!=0 and args[0]!="false"
         southwest.run([user],loadCache,scan=True)
+    update.message.reply_text("scan complete")
 
 def commandHelp(bot,update,args):
     """

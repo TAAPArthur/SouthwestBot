@@ -13,6 +13,7 @@ case $1 in
         python southwest.py $@
         ;;
     send-message)
+        shift
         python southwestMessenger.py $@
         ;;
 esac
