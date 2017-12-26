@@ -1,16 +1,19 @@
 #!/bin/bash
 
 cd "/usr/lib/southwest-bot/"
-case $1 in 
+case "$1" in 
     scan)
         python southwest.py
+        ;;
+    update)
+        python southwest.py "$2"
         ;;
     listen)
         python southwestMessenger.py
         ;;
     checkin)
         shift
-        python southwest.py $@
+        python southwest.py $@ #Doesn't support names with spaces
         ;;
     send-message)
         shift

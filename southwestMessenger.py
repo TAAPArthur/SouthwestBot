@@ -7,11 +7,17 @@ import sys
 from southwestRecords import Records,Flight,User,ScannedFlight,setCheckinTimer
 import southwest
 import logging
+from datetime import datetime,timedelta
+import time
 #logging.basicConfig(level=logging.ERROR,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 
 TOKEN=open("token","r").read().strip()
-
+SCAN_IN_PROGRESS=False
+LAST_SCAN=None
+INTERVAL=timedelta(minutes=10)
+USER_INTERVAL=timedelta(days=1)
+USER_HISTORY={}
 def start(bot, update):
     """
     Initializes the bot. Only needs to be run once
@@ -63,12 +69,30 @@ def setProperty(bot,update,args):
             setUser(user)
             update.message.reply_text(user.whoami())
 def scan(bot,update,args):
+    """
+    Scans for a decrease in price value
+    """
+    
     user=getUser(update)
-    if user:
+    
+    if user and canScan(user):
+        waitForScanToFinish()
         loadCache = len(args)!=0 and args[0]!="false"
         southwest.run([user],loadCache,scan=True)
+        endScan(user)
+        
     update.message.reply_text("scan complete")
-
+def update(bot,update):
+    """
+    Queries southwest for any changes to your upcoming flights.
+    """
+    user=getUser(update)
+    
+    if user and canScan(user):
+        waitForScanToFinish()
+        southwest.run([user],loadCache=False,checkForNewPurchases=True)
+        endScan(user)
+        
 def commandHelp(bot,update,args):
     """
     Displays help
@@ -85,7 +109,22 @@ def commandHelp(bot,update,args):
         handler=getHandlerByCommand(args)
         update.message.reply_text("Message not found" if handler==None else getDocStringMessageHandler(handler))
 
-
+def waitForScanToFinish():
+    while SCAN_IN_PROGRESS:
+            time.sleep(10)
+        if LAST_SCAN:
+            if datetime.now()-LAST_SCAN<INTERVAL:
+                time.sleep(max((datetime.now()-LAST_SCAN).seconds,60))
+    SCAN_IN_PROGRESS=True
+def canScan(user):
+    if user in USER_HISTORY and datetime.now()-USER_HISTORY[user]<USER_INTERVAL:
+        update.message.reply_text("You can only scan once per 24 hour period. Try again in %s ", str(datetime.now()-USER_HISTORY[user]))
+        return False
+    return True
+def endScan():
+    SCAN_IN_PROGRESS=False
+    LAST_SCAN=USER_HISTORY[user]=datetime.now()
+        
 def getUser(update):
     r=Records()
     user=r.getUser(update.message.chat_id)
@@ -116,7 +155,7 @@ if __name__ == "__main__":
         updater = Updater(token=TOKEN)
         dispatcher = updater.dispatcher
         handlers=[CommandHandler('start', start),CommandHandler('at', at,pass_args=True),CommandHandler('id', id),
-        CommandHandler('whoami', whoami),CommandHandler('set', setProperty,pass_args=True),CommandHandler('help', commandHelp,pass_args=True),CommandHandler('scan', scan,pass_args=True)
+        CommandHandler('whoami', whoami),CommandHandler('set', setProperty,pass_args=True),CommandHandler('help', commandHelp,pass_args=True),CommandHandler('scan', scan,pass_args=True),CommandHandler('update', update,pass_args=True)
         ]
         for handler in handlers:
             dispatcher.add_handler(handler)

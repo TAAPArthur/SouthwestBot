@@ -24,8 +24,6 @@ class SouthwestBot:
     flightSelectionPage="https://www.southwest.com/flight/select-flight.html?newDepartDate=%d-%d&newReturnDate="
     timeout=20
     
-    
-    
     def __init__(self,database=None,loadCache=False):
         self.driver = webdriver.PhantomJS(service_log_path="/dev/null",service_args=['--ssl-protocol=any'])
         self.driver.implicitly_wait(self.timeout)
@@ -36,6 +34,26 @@ class SouthwestBot:
         self.user=user
         if user!=None:
             self.output("setting user:",user)
+    
+    def message(self,message,id=None):
+        if id ==None:
+            id=self.user.chatID
+        if len(message)>1 and id:
+            SM.sendMessage(message,id)
+        
+    def output(self,*message):
+        time=datetime.now().strftime("%Y/%m/%d %H:%M:%S")+":"
+        formattedMessage=str(message[0])
+        for i in range(1,len(message)):
+            formattedMessage+=str(message[i])
+        print (time,formattedMessage, flush=True)
+    def screenshot(self,fileName="screenshot.png"):
+        self.output("saving screen shot to ",fileName)
+        self.driver.save_screenshot(fileName)
+    def commit(self):
+        self.database.commit()
+    def close(self):
+        self.database.close()
     def login(self):
         self.driver.get(self.loginPage)
         self.waitForElementToLoad("loyaltyLoginForm")
@@ -138,16 +156,12 @@ class SouthwestBot:
                 departureTime=datetime.strptime(date+" "+startTime,"%m/%d/%y %I:%M%p")
                 arrivalTime=datetime.strptime(date+" "+endTime,"%m/%d/%y %I:%M%p")
                 flightNumber=int(firstRow[i].find_element_by_class_name("flight-details--flight-number").text)
-                flight=Flight(title=title,confirmationNumber=confirmationNumber, departureTime=departureTime,arrivalTime=arrivalTime,origin=origin,dest=dest,flightNumber=flightNumber, startDate=self.user.defaultDeltaStart,endDate=self.user.defaultDeltaEnd)         
+                flight=Flight(title=title,confirmationNumber=confirmationNumber, departureTime=departureTime,arrivalTime=arrivalTime,origin=origin,dest=dest,flightNumber=flightNumber, startDate=self.user.defaultDeltaStart,endDate=self.user.defaultDeltaEnd)
+                
                 if flight in savedUpComingFlights:
-                    price,startDate,endDate=savedUpComingFlights[flight]
-                    if startDate==None:
-                        startDate=self.user.defaultDeltaStart
-                    if endDate==None:
-                        endDate=self.user.defaultDeltaEnd
-                    flight.setMetadata(price,startDate,endDate)
-                print(flight)
-                flights.append(flight)
+                    flights.append(savedUpComingFlights[flight])
+                else:
+                    flights.append(flight)
                 
         return flights
 
@@ -204,7 +218,7 @@ class SouthwestBot:
             return reducedPriceOnFlight
             
         self.driver.get(self.flightsPage)
-        time.sleep(2)
+        time.sleep(5)
         self.driver.find_element_by_id("oneWay").click()
         dest=self.driver.find_element_by_id("destinationAirport_displayed")
         origin=self.driver.find_element_by_id("originAirport_displayed")
@@ -214,11 +228,11 @@ class SouthwestBot:
         origin.clear()
         departDate.clear()
         dest.send_keys(flight.dest)
-        time.sleep(.5)
+        time.sleep(1)
         origin.send_keys(flight.origin)
-        time.sleep(.5)
+        time.sleep(1)
         departDate.send_keys(flight.getDateString())
-        time.sleep(.5)
+        time.sleep(1)
         self.driver.find_element_by_id("submitButton").click()
         
         newFlight=flight.price==None
@@ -226,6 +240,7 @@ class SouthwestBot:
         currentFlightReducedPrice=scanFlights(flight.getDate(),flight,newFlight,cheaperFlights)
         for date in flight.getDates()[1:]:
             if date > datetime.date(datetime.now()):
+                time.sleep(10)
                 self.driver.get(self.flightSelectionPage % (date.month,date.day))
                 
                 scanFlights(date,flight,newFlight,cheaperFlights)
@@ -243,41 +258,25 @@ class SouthwestBot:
             if previousPrice == None:
                 if flight.price==None:
                     flight.price=0
-                self.database.saveNewFlight(self.user.id,flight)
+                self.database.saveNewFlight(self.user.getID(),flight)
         if len(cheaperFlights)>0:
             message="In relation to %s\n %d cheaperFlights found" % (str(flight),len(cheaperFlights))
             for cheaperFlight in cheaperFlights:
                 message+=(str(cheaperFlight)+"\n")
             self.message(message)
         if currentFlightReducedPrice:
+            if self.database:
+                self.database.updatePriceOfUpComingFlights(self.user.getID(),flight)
             self.message("Your current flight's price has been reduced by $%d to $%d; Flight Info %s" % (previousPrice-currentFlightReducedPrice, currentFlightReducedPrice,str(flight)))
         
-    def message(self,message,id=None):
-        if id ==None:
-            id=self.user.chatID
-        if len(message)>1 and id:
-            SM.sendMessage(message,id)
-        
-    def saveScreenshot(self,fileName="screenshot.png"):
-        self.output("saving screen shot to ",fileName)
-        self.driver.save_screenshot(fileName)
-        
-
-    def output(self,*message):
-        
-        time=datetime.now().strftime("%Y/%m/%d %H:%M:%S")+":"
-        formattedMessage=str(message[0])
-        for i in range(1,len(message)):
-            formattedMessage+=str(message[i])
-        print (time,formattedMessage, flush=True)
-    def screenshot(self,fileName="screenshot.png"):
-        self.output("saving screen shot to ",fileName)
-        self.driver.save_screenshot(fileName)
-        pass
-    def run(self,savedUpComingFlights,checkin=True,scan=True):
+    def run(self,savedUpComingFlights,checkForNewPurchases=False,checkin=False,scan=False):
         try:
             self.login()
-            flights=self.getRecentFlights(savedUpComingFlights)
+            
+            flights=self.getRecentFlights(savedUpComingFlights) if checkForNewPurchases else savedUpComingFlights
+            
+            if self.database and checkForNewPurchases:
+                self.database.setSavedUpComingFlights(self.user.getID(),flights)
             self.output("found %d flights" % len(flights))
             
             if checkin:
@@ -288,6 +287,8 @@ class SouthwestBot:
             if scan:
                 for flight in flights:
                     self.notifyUserOfCheaperFlights(flight)
+            self.commit()
+            
         except:
             self.output("Failed to run with %s " % self.user.username)
             self.screenshot("/home/syncrop/%s.png" % self.user.username)
@@ -295,9 +296,7 @@ class SouthwestBot:
             traceback.print_stack()
 
 
-def run(users=None,loadCache=True,checkin=True,scan=True):
-
-    
+def run(users=None,loadCache=True,checkForNewPurchases=False,checkin=False,scan=False):
         database=Records()
         if not users:
             users=database.getUsers()
@@ -305,15 +304,16 @@ def run(users=None,loadCache=True,checkin=True,scan=True):
         bot=SouthwestBot(database,loadCache)
         for user in users:
             bot.setUser(user)
-            bot.run(database.getSavedUpComingFlights(user.id),checkin,scan)
-            database.commit()
-                
-        database.close()
+            bot.run(database.getSavedUpComingFlights(user.id),checkin,scan)    
+        bot.close()
     
 if __name__ == "__main__":
     if len(sys.argv)==4:
         bot=SouthwestBot()
         bot.checkin(sys.argv[1],sys.argv[2],sys.argv[3])
-    else:     
-        run()
+    else:  
+        if len(sys.argv)==2:
+            run(checkForNewPurchases=True,checkin=False,scan=False)
+        else:
+            run(checkForNewPurchases=False,checkin=True,scan=True)
 

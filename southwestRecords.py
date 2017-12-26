@@ -25,13 +25,26 @@ class Records:
     def _createUser(self,args):
         userID,username,password,firstName,lastName,chatID, defaultDeltaStart,defaultDeltaEnd,priceDelta,minPrice=args
         return User(userID,username,password,firstName,lastName,chatID, defaultDeltaStart,defaultDeltaEnd,priceDelta,minPrice)
+    
+    def setSavedUpComingFlights(self,userID,flights):
+        query="UPDATE UpcomingFlights SET `Active`=2 WHERE UserID=%s AND DepartureTime > NOW() AND Active=1"
+        self.cur.execute(query,(userID,))
+        query="UPDATE UpcomingFlights SET `Active`=1 WHERE UserID=%s AND Active=2 AND FlightNumber=%s AND DepartureTime=%s"
+        for flight in flights:
+            self.cur.execute(query,(userID,flight.flightNumber,flight.departureTime.strftime("%Y-%m-%d %H:%M:%S")))
+        query="UPDATE UpcomingFlights SET `Active`=0 WHERE UserID=%s AND Active=2"
+        self.cur.execute(query,(userID,))
+    def updatePriceOfUpComingFlights(self,userID,flight):
+        query="UPDATE UpcomingFlights SET `Price`=%s WHERE UserID=%s AND DepartureTime > NOW() AND Active=1 AND FlightNumber=%s AND DepartureTime=%s"
+        self.cur.execute(query,(userID,flight.flightNumber,flight.departureTime.strftime("%Y-%m-%d %H:%M:%S")))
         
     def getSavedUpComingFlights(self,userID):
-        query="SELECT FlightNumber, DepartureTime,Price,StartDate,EndDate FROM UpcomingFlights WHERE UserID=%s AND DepartureTime > NOW()"
+        query="SELECT `FlightNumber`, `DepartureTime`, `ArrivalTime`, `Origin`, `Dest`,`ConfirmationNumber`, `Price`, `StartDate`, `EndDate`, `Title` FROM UpcomingFlights WHERE UserID=%s AND DepartureTime > NOW() AND Active=1"
         self.cur.execute(query,(userID,))
         savedUpComingFlights={}
-        for flightNumber,departureTime,price,startDate,endDate in self.cur:
-            savedUpComingFlights[Flight(flightNumber,departureTime=departureTime,arrivalTime=departureTime)]= price,startDate,endDate
+        for flightNumber,departureTime,arrivalTime,origin,dest, confirmationNumber,price,startDate,endDate,title in self.cur:
+            flight=Flight(title=title,confirmationNumber=confirmationNumber, departureTime=departureTime,arrivalTime=arrivalTime,origin=origin,dest=dest,flightNumber=flightNumber,price=price, startDate=startDate,endDate=endDate)
+            savedUpComingFlights[flight.getIdentifier()]=flight
         return savedUpComingFlights
     
     def saveNewFlight(self,userID,flight):
@@ -79,10 +92,19 @@ class Flight:
         self.flightNumber=int(flightNumber)
         self.setMetadata(price,startDate,endDate)
         
+    def copyMetadata(self,flight,user):
+        price,startDate,endDate=flight.getMetdata()
+        if startDate==None:
+            startDate=self.user.defaultDeltaStart
+        if endDate==None:
+            endDate=self.user.defaultDeltaEnd
+        self.setMetadata(price,startDate,endDate)
     def setMetadata(self,price,startDate,endDate):
         self.price=price
         self.startDate=startDate
         self.endDate=endDate
+    def getMetdata(self):
+        return self.price,self.startDate,self.endDate
     def getIdentifier(self):
         return self.flightNumber,self.departureTime
     def shouldSetCheckinTimer(self,database=None):        
@@ -129,6 +151,8 @@ class User:
         self.defaultDeltaEnd=defaultDeltaEnd
         self.priceDelta=float(priceDelta)
         self.minPrice=float(minPrice)
+    def getID(self):
+        return self.id
     def getTuple(self):
         return self.id, self.username, self.password, self.firstName, self.lastName, self.chatID, self.defaultDeltaStart, self.defaultDeltaEnd, self.priceDelta, self.minPrice
     def __str__(self):
