@@ -4,7 +4,8 @@ from telegram.ext import CommandHandler
 import telegram
 import sys
 
-from southwestRecords import Records,Flight,User,ScannedFlight,setCheckinTimer
+from southwestObjects import Flight,User,ScannedFlight,setCheckinTimer
+from southwestRecords import Records
 import southwest
 import logging
 from datetime import datetime,timedelta
