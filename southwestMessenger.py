@@ -5,7 +5,7 @@ import telegram
 import sys
 
 from southwestRecords import Records,Flight,User,ScannedFlight,setCheckinTimer
-
+import southwest
 import logging
 logging.basicConfig(level=logging.ERROR,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -65,7 +65,10 @@ def setProperty(bot,update,args):
             update.message.reply_text(user.whoami())
         else:
             update.message.reply_text("user not found")
-        
+def scan(bot,update,args):
+    users=[getUser(update)]
+    loadCache = len(args)!=0 and args[0]!="false"
+    southwest.run(users,loadCache,scan=True)
 
 def commandHelp(bot,update,args):
     """
@@ -112,11 +115,10 @@ if __name__ == "__main__":
         updater = Updater(token=TOKEN)
         dispatcher = updater.dispatcher
         handlers=[CommandHandler('start', start),CommandHandler('at', at,pass_args=True),CommandHandler('id', id),
-        CommandHandler('whoami', whoami),CommandHandler('set', setProperty,pass_args=True),CommandHandler('help', commandHelp,pass_args=True)
+        CommandHandler('whoami', whoami),CommandHandler('set', setProperty,pass_args=True),CommandHandler('help', commandHelp,pass_args=True),CommandHandler('scan', scan,pass_args=True)
         ]
         for handler in handlers:
             dispatcher.add_handler(handler)
-        r=Records()
         updater.start_polling()
         updater.idle()
 

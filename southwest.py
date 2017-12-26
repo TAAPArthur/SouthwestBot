@@ -26,11 +26,12 @@ class SouthwestBot:
     
     
     
-    def __init__(self,user=None,cache={}):
+    def __init__(self,database=None,loadCache=False):
         self.driver = webdriver.PhantomJS(service_log_path="/dev/null",service_args=['--ssl-protocol=any'])
         self.driver.implicitly_wait(self.timeout)
-        self.setUser(user)
-        self.cache=cache
+        self.setUser(None)
+        self.database=database
+        self.cache=database.getCheapFlights() if loadCache else {}
     def setUser(self,user):
         self.user=user
         if user!=None:
@@ -195,7 +196,7 @@ class SouthwestBot:
                     if self.cache[cheaperFlight]>=cheaperFlight.price:
                         self.cache[cheaperFlight]=cheaperFlight.price
                         if self.cache[cheaperFlight]>cheaperFlight.price:
-                            database.saveCheapFlights([cheaperFlight])
+                            self.database.saveCheapFlights([cheaperFlight])
                         if not newFlight:
                             continue
                         
@@ -237,12 +238,12 @@ class SouthwestBot:
         cheaperFlights,currentFlightReducedPrice=self.getCheaperFlights(flight)
         cheaperFlights.sort()
         cheaperFlights=cheaperFlights[:10]
-        if database:
-            database.saveCheapFlights(cheaperFlights)
+        if self.database:
+            self.database.saveCheapFlights(cheaperFlights)
             if previousPrice == None:
                 if flight.price==None:
                     flight.price=0
-                database.saveNewFlight(self.user.id,flight)
+                self.database.saveNewFlight(self.user.id,flight)
         message=""
         for cheaperFlight in cheaperFlights:
             message+=(str(cheaperFlight)+"\n")
@@ -269,33 +270,37 @@ class SouthwestBot:
             formattedMessage+=str(message[i])
         print (time,formattedMessage, flush=True)
     
-    def run(self,savedUpComingFlights):
+    def run(self,savedUpComingFlights,checkin=True,scan=True):
         self.login()
         flights=self.getRecentFlights(savedUpComingFlights)
         self.output("found %d flights" % len(flights))
         
-        for flight in flights:
-            if flight.shouldSetCheckinTimer(database):
-                self.output("Setting timer to check in for %s" % str(flight))
-                flight.setCheckinTimer(self.user)
-                
-        for flight in flights:
-            self.notifyUserOfCheaperFlights(flight)
-            
+        if checkin:
+            for flight in flights:
+                if flight.shouldSetCheckinTimer(self.database):
+                    self.output("Setting timer to check in for %s" % str(flight))
+                    flight.setCheckinTimer(self.user)
+        if scan:
+            for flight in flights:
+                self.notifyUserOfCheaperFlights(flight)
+
+
+def run(users=None,loadCache=True,checkin=True,scan=True):
+    
+    database=Records()
+    if not users:
+        users=database.getUsers()
+
+    bot=SouthwestBot(database,loadCache)
+    for user in users:
+            bot.setUser(user)
+            bot.run(database.getSavedUpComingFlights(user.id),checkin,scan)
+            database.commit()
+    database.close()
 if __name__ == "__main__":
     if len(sys.argv)==4:
-        bot=SouthwestBot(None)
+        bot=SouthwestBot()
         bot.checkin(sys.argv[1],sys.argv[2],sys.argv[3])
-    else:
-        database=Records()
-        
-        users=database.getUsers()
-                
-        cache=database.getCheapFlights()
-        bot=SouthwestBot(None,cache)
-        for user in users:
-            bot.setUser(user)
-            bot.run(database.getSavedUpComingFlights(user.id))
-            database.commit()
-        database.close()
+    else:     
+        run()
 

@@ -3,8 +3,10 @@ from datetime import datetime,date,timedelta
 from os import system
 
 class Records:
-    conn = mysql.connector.connect(user='southwest', database='Southwest')
-    cur = conn.cursor(buffered=True)
+    
+    def __init__(self):
+        self.conn = mysql.connector.connect(user='southwest', database='Southwest')
+        self.cur = self.conn.cursor(buffered=True)    
     def setUser(self,user):
         query="REPLACE INTO Users VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         self.cur.execute(query,user.getTuple())
