@@ -112,7 +112,7 @@ def commandHelp(bot,update,args):
 
 def waitForScanToFinish():
     while SCAN_IN_PROGRESS:
-            time.sleep(10)
+        time.sleep(10)
         if LAST_SCAN:
             if datetime.now()-LAST_SCAN<INTERVAL:
                 time.sleep(max((datetime.now()-LAST_SCAN).seconds,60))

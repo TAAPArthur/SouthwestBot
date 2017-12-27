@@ -12,7 +12,8 @@ from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.support.expected_conditions import _find_element
 
 
-from southwestRecords import Records,Flight,User,ScannedFlight
+from southwestRecords import Records
+from southwestObjects import Flight,User,ScannedFlight
 import southwestMessenger as SM
 
 
@@ -159,9 +160,9 @@ class SouthwestBot:
                 flight=Flight(title=title,confirmationNumber=confirmationNumber, departureTime=departureTime,arrivalTime=arrivalTime,origin=origin,dest=dest,flightNumber=flightNumber, startDate=self.user.defaultDeltaStart,endDate=self.user.defaultDeltaEnd)
                 
                 if flight in savedUpComingFlights:
-                    flights.append(savedUpComingFlights[flight])
-                else:
-                    flights.append(flight)
+                    flight.copyMetadata(savedUpComingFlights[flight],self.user)
+
+                flights.append(flight)
                 
         return flights
 
@@ -218,12 +219,12 @@ class SouthwestBot:
             return reducedPriceOnFlight
             
         self.driver.get(self.flightsPage)
-        time.sleep(5)
+        time.sleep(1)
         self.driver.find_element_by_id("oneWay").click()
+        time.sleep(1)
         dest=self.driver.find_element_by_id("destinationAirport_displayed")
         origin=self.driver.find_element_by_id("originAirport_displayed")
         departDate=self.driver.find_element_by_id("outboundDate")
-        
         dest.clear()
         origin.clear()
         departDate.clear()
@@ -231,8 +232,10 @@ class SouthwestBot:
         time.sleep(1)
         origin.send_keys(flight.origin)
         time.sleep(1)
+        self.output(flight.getDateString())
         departDate.send_keys(flight.getDateString())
         time.sleep(1)
+        self.output(flight.dest,flight.origin)
         self.driver.find_element_by_id("submitButton").click()
         
         newFlight=flight.price==None
@@ -258,7 +261,7 @@ class SouthwestBot:
             if previousPrice == None:
                 if flight.price==None:
                     flight.price=0
-                self.database.saveNewFlight(self.user.getID(),flight)
+                self.database.saveUpcomingFlight(self.user.getID(),flight)
         if len(cheaperFlights)>0:
             message="In relation to %s\n %d cheaperFlights found" % (str(flight),len(cheaperFlights))
             for cheaperFlight in cheaperFlights:
@@ -273,18 +276,28 @@ class SouthwestBot:
         try:
             self.login()
             
-            flights=self.getRecentFlights(savedUpComingFlights) if checkForNewPurchases else savedUpComingFlights
+            if checkForNewPurchases:
+                self.output("Checking for new purchases")
+                flights=self.getRecentFlights(savedUpComingFlights)
+                print(flights)
+                print(flights[0])
+                if self.database:    
+                    self.database.setSavedUpcomingFlights(self.user.getID(),flights)
+            else:
+                flights=savedUpComingFlights
             
-            if self.database and checkForNewPurchases:
-                self.database.setSavedUpComingFlights(self.user.getID(),flights)
+            
+                
             self.output("found %d flights" % len(flights))
             
             if checkin:
+                self.output("Attempting to checkin")
                 for flight in flights:
                     if flight.shouldSetCheckinTimer(self.database):
                         self.output("Setting timer to check in for %s" % str(flight))
                         flight.setCheckinTimer(self.user)
             if scan:
+                self.output("Scanning")
                 for flight in flights:
                     self.notifyUserOfCheaperFlights(flight)
             self.commit()
@@ -293,7 +306,7 @@ class SouthwestBot:
             self.output("Failed to run with %s " % self.user.username)
             self.screenshot("/home/syncrop/%s.png" % self.user.username)
             traceback.print_exc()
-            traceback.print_stack()
+            #traceback.print_stack()
 
 
 def run(users=None,loadCache=True,checkForNewPurchases=False,checkin=False,scan=False):
@@ -304,7 +317,7 @@ def run(users=None,loadCache=True,checkForNewPurchases=False,checkin=False,scan=
         bot=SouthwestBot(database,loadCache)
         for user in users:
             bot.setUser(user)
-            bot.run(database.getSavedUpComingFlights(user.id),checkin,scan)    
+            bot.run(database.getSavedUpComingFlights(user.id), checkForNewPurchases=checkForNewPurchases,checkin=checkin,scan=scan)    
         bot.close()
     
 if __name__ == "__main__":

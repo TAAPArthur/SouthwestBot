@@ -15,9 +15,9 @@ class Flight:
     def copyMetadata(self,flight,user):
         price,startDate,endDate=flight.getMetdata()
         if startDate==None:
-            startDate=self.user.defaultDeltaStart
+            startDate=user.defaultDeltaStart
         if endDate==None:
-            endDate=self.user.defaultDeltaEnd
+            endDate=user.defaultDeltaEnd
         self.setMetadata(price,startDate,endDate)
     def setMetadata(self,price,startDate,endDate):
         self.price=price
