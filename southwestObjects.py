@@ -40,7 +40,7 @@ class Flight:
     def __lt__(self, other):
         return self.price<other.price
     def __str__(self):
-        return "#%d %s-%s %s to %s" % (self.flightNumber,self.departureTime.strftime("%b %d %y %H:%M"),self.arrivalTime.strftime("%H:%M"),self.origin,self.dest)
+        return "#%d %s-%s %s to %s ($%s) range: %s-%s" % (self.flightNumber,self.departureTime.strftime("%b %d %y %H:%M"),self.arrivalTime.strftime("%H:%M"),self.origin,self.dest,self.price,self.startDate,self.endDate)
     def getDate(self):
         return datetime.date(self.departureTime)
     def getDates(self):

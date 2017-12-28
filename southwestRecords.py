@@ -42,7 +42,7 @@ class Records:
         query="UPDATE UpcomingFlights SET `Price`=%s WHERE UserID=%s AND DepartureTime > NOW() AND Active=1 AND FlightNumber=%s AND DepartureTime=%s"
         self.cur.execute(query,(userID,flight.flightNumber,flight.departureTime.strftime("%Y-%m-%d %H:%M:%S")))
         
-    def getSavedUpComingFlights(self,userID):
+    def getSavedUpcomingFlights(self,userID):
         query="SELECT `FlightNumber`, `DepartureTime`, `ArrivalTime`, `Origin`, `Dest`,`ConfirmationNumber`, `Price`, `StartDate`, `EndDate`, `Title` FROM UpcomingFlights WHERE UserID=%s AND DepartureTime > NOW() AND Active=1"
         self.cur.execute(query,(userID,))
         savedUpComingFlights={}

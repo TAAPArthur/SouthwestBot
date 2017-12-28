@@ -232,10 +232,8 @@ class SouthwestBot:
         time.sleep(1)
         origin.send_keys(flight.origin)
         time.sleep(1)
-        self.output(flight.getDateString())
         departDate.send_keys(flight.getDateString())
         time.sleep(1)
-        self.output(flight.dest,flight.origin)
         self.driver.find_element_by_id("submitButton").click()
         
         newFlight=flight.price==None
@@ -243,7 +241,7 @@ class SouthwestBot:
         currentFlightReducedPrice=scanFlights(flight.getDate(),flight,newFlight,cheaperFlights)
         for date in flight.getDates()[1:]:
             if date > datetime.date(datetime.now()):
-                time.sleep(10)
+                time.sleep(5)
                 self.driver.get(self.flightSelectionPage % (date.month,date.day))
                 
                 scanFlights(date,flight,newFlight,cheaperFlights)
@@ -291,7 +289,7 @@ class SouthwestBot:
             self.output("found %d flights" % len(flights))
             
             if checkin:
-                self.output("Attempting to checkin")
+                self.output("Attempting to set checkin timer")
                 for flight in flights:
                     if flight.shouldSetCheckinTimer(self.database):
                         self.output("Setting timer to check in for %s" % str(flight))
@@ -317,7 +315,7 @@ def run(users=None,loadCache=True,checkForNewPurchases=False,checkin=False,scan=
         bot=SouthwestBot(database,loadCache)
         for user in users:
             bot.setUser(user)
-            bot.run(database.getSavedUpComingFlights(user.id), checkForNewPurchases=checkForNewPurchases,checkin=checkin,scan=scan)    
+            bot.run(database.getSavedUpcomingFlights(user.id), checkForNewPurchases=checkForNewPurchases,checkin=checkin,scan=scan)    
         bot.close()
     
 if __name__ == "__main__":

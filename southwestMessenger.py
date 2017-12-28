@@ -10,7 +10,7 @@ import southwest
 import logging
 from datetime import datetime,timedelta
 import time
-#logging.basicConfig(level=logging.ERROR,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.ERROR,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 
 TOKEN=open("token","r").read().strip()
@@ -85,14 +85,50 @@ def scan(bot,update,args):
     update.message.reply_text("scan complete")
 def update(bot,update):
     """
-    Queries southwest for any changes to your upcoming flights.
+    Queries southwest for any changes to your upcoming flights. Then scans for any decrease in price
     """
     user=getUser(update)
     
     if user and canScan(user):
         waitForScanToFinish()
-        southwest.run([user],loadCache=False,checkForNewPurchases=True)
+        southwest.run([user],loadCache=False,checkForNewPurchases=True,scan=True)
         endScan(user)
+        update.message.reply_text("Update complete")
+
+def setFlight(bot,update,args):
+    """
+    Set Flight metadata: index,price, startOffset, endOffset
+    index- index of the flight as reported by listFlights
+    price- the amount you bought the flight for so we only send you cheaper flights
+    startOffset- days before the flight to start scaning
+    endOffset- days after the flight to start scaning
+    """
+    user=getUser(update)
+    if user:
+        r=Records()
+        
+        flight=list(r.getSavedUpcomingFlights(user.getID()).keys())[int(args[0])]
+        flight.price=int(args[1])
+        if len(args)>2:
+            flight.startDate=int(args[2])
+            if len(args)>3:
+                flight.endDate=int(args[3])
+        r.saveUpcomingFlight(user.getID(),flight)
+        r.commit()
+        r.close()
+        update.message.reply_text(str(flight))
+def listFlights(bot,update):
+    """
+    List all known upcoming flights. If you don't see your flight try running update
+    If there is info we can't get like price of the flight, you can mananly set it using /setFlight
+    """
+    user=getUser(update)
+    if user:
+        r=Records()
+        message="\n".join(map(str,r.getSavedUpcomingFlights(user.getID())))
+        r.commit()
+        r.close()
+        update.message.reply_text(message)
         
 def commandHelp(bot,update,args):
     """
@@ -102,7 +138,7 @@ def commandHelp(bot,update,args):
     if len(args)==0:
         message=""
         for handler in handlers:
-            message=getDocStringMessageHandler(handler)
+            message+=getDocStringMessageHandler(handler)
         update.message.reply_text(message)
     else :
         if isinstance(args,list):
@@ -156,7 +192,7 @@ if __name__ == "__main__":
         updater = Updater(token=TOKEN)
         dispatcher = updater.dispatcher
         handlers=[CommandHandler('start', start),CommandHandler('at', at,pass_args=True),CommandHandler('id', id),
-        CommandHandler('whoami', whoami),CommandHandler('set', setProperty,pass_args=True),CommandHandler('help', commandHelp,pass_args=True),CommandHandler('scan', scan,pass_args=True),CommandHandler('update', update,pass_args=True)
+        CommandHandler('whoami', whoami),CommandHandler('set', setProperty,pass_args=True),CommandHandler('help', commandHelp,pass_args=True),CommandHandler('scan', scan,pass_args=True),CommandHandler('update', update,pass_args=True), CommandHandler(['setflight','setFlight'],setFlight,pass_args=True), CommandHandler(['getflights','getFlights','list'],listFlights)
         ]
         for handler in handlers:
             dispatcher.add_handler(handler)
