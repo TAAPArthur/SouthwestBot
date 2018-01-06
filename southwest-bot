@@ -5,18 +5,23 @@ case "$1" in
     scan)
         python southwest.py
         ;;
+    check)
+        python southwest.py "check"
+        ;;
     update)
-        python southwest.py "$2"
+        python southwest.py "update"
         ;;
     listen)
         python southwestMessenger.py
         ;;
     checkin)
         shift
-        python southwest.py "$1" "$2" "$3" "$4" # confirmationNumber,firstName, lastName,id
+        python southwest.py "$1" "$2" "$3" "$4" # confirmationNumber,firstName, lastName,chatId
         ;;
     send-message)
         shift
-        python southwestMessenger.py $@
+        id="$1"
+        shift
+        python southwestMessenger.py "$id" "$@"
         ;;
 esac

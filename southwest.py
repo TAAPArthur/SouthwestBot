@@ -323,8 +323,11 @@ if __name__ == "__main__":
         bot=SouthwestBot()
         bot.checkin(sys.argv[1],sys.argv[2],sys.argv[3], sys.argv[4] if len(sys.argv)==5 else None)
     else:  
-        if len(sys.argv)==2:
-            run(checkForNewPurchases=True,checkin=False,scan=False)
+        if len(sys.argv)==1:
+            run(checkForNewPurchases=False,checkin=True,scan=True)            
         else:
-            run(checkForNewPurchases=False,checkin=True,scan=True)
+            if sys.argv[1] == "update":
+                run(checkForNewPurchases=True,checkin=False,scan=False)
+            elif sys.argv[1] == "check":
+                run(checkForNewPurchases=False,checkin=True,scan=False)
 

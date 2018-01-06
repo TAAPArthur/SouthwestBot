@@ -175,13 +175,13 @@ def getHandlerByCommand(command):
 def getDocStringMessageHandler(handler):
     return "%s - %s \n" % (str(handler.command) if len(handler.command)>1 else handler.command[0],handler.callback.__doc__)
         
-def sendMessage(message,id):
+def sendMessage(message,chatID):
     bot = telegram.Bot(token=TOKEN)
-    bot.send_message(chat_id=id,text=message)
+    bot.send_message(chat_id=chatID,text=message)
 
 if __name__ == "__main__":
     if len(sys.argv)==3:
-        sendMessage(sys.argv[1],sys.argv[2])
+        sendMessage(chatID=sys.argv[2],message=sys.argv[1])
     else:
         print("Starting chat bot")
         updater = Updater(token=TOKEN)
