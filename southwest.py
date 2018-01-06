@@ -67,24 +67,23 @@ class SouthwestBot:
         self.driver.get(self.checkinPage)
         
         self.output("attemting to checking for %s %s (%s)" % (firstName,lastName,confirmationNumber))
-        i=0
-        while True:
-            self.driver.find_element_by_id("confirmationNumber").clear()
-            self.driver.find_element_by_id("passengerFirstName").clear()
-            self.driver.find_element_by_id("passengerLastName").clear()
-            self.driver.find_element_by_id("confirmationNumber").send_keys(confirmationNumber)
-            self.driver.find_element_by_id("passengerFirstName").send_keys(firstName)
-            self.driver.find_element_by_id("passengerLastName").send_keys(lastName)
-            self.driver.find_element_by_id("form-mixin--submit-button").click()
-            if self.driver.current_url!=self.checkinPage:
-                if id:
-                    self.message("checked in to %s %s (%s)" % (firstName,lastName,confirmationNumber),id)
-                break
-            i+=1
-            time.sleep(1)
-            if i==60:
-                self.output("could not checkin")
-                break
+        self.driver.find_element_by_id("confirmationNumber").clear()
+        self.driver.find_element_by_id("passengerFirstName").clear()
+        self.driver.find_element_by_id("passengerLastName").clear()
+        self.driver.find_element_by_id("confirmationNumber").send_keys(confirmationNumber)
+        self.driver.find_element_by_id("passengerFirstName").send_keys(firstName)
+        self.driver.find_element_by_id("passengerLastName").send_keys(lastName)
+        self.driver.find_element_by_id("form-mixin--submit-button").click()
+        if self.driver.current_url!=self.checkinPage:
+            if id:
+                self.message("checked in to %s %s (%s)" % (firstName,lastName,confirmationNumber),id)
+        self.output(self.driver.current_url)
+        self.screenshot("checkin.png")
+        buttons=self.driver.find_elements_by_xpath("//*[contains(text(), 'Check In')]")
+        for button in buttons:
+            print(button.text)
+        for button in buttons:
+            print(button.click())
         
     def waitForElementToLoad(self,id):
         element_present = EC.presence_of_element_located((By.ID, id))
@@ -293,6 +292,7 @@ class SouthwestBot:
                 for flight in flights:
                     if flight.shouldSetCheckinTimer(self.database):
                         self.output("Setting timer to check in for %s" % str(flight))
+                        SM.sendMessage("You have an upcoming flight %s" % str(flight),self.user.getChatID())
                         flight.setCheckinTimer(self.user)
             if scan:
                 self.output("Scanning")
@@ -319,9 +319,9 @@ def run(users=None,loadCache=True,checkForNewPurchases=False,checkin=False,scan=
         bot.close()
     
 if __name__ == "__main__":
-    if len(sys.argv)==4:
+    if len(sys.argv)==4 or len(sys.argv)==5:
         bot=SouthwestBot()
-        bot.checkin(sys.argv[1],sys.argv[2],sys.argv[3])
+        bot.checkin(sys.argv[1],sys.argv[2],sys.argv[3], sys.argv[4] if len(sys.argv)==5 else None)
     else:  
         if len(sys.argv)==2:
             run(checkForNewPurchases=True,checkin=False,scan=False)

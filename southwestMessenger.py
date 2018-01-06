@@ -12,7 +12,7 @@ from datetime import datetime,timedelta
 import threading
 
 import time
-logging.basicConfig(level=logging.ERROR,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+#logging.basicConfig(level=logging.ERROR,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 
 TOKEN=open("token","r").read().strip()

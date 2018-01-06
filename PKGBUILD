@@ -2,7 +2,7 @@
 
 
 pkgname='southwest-bot'
-pkgver='0.9.4'
+pkgver='0.9.5'
 _language='en-US'
 pkgrel=1
 pkgdesc='Scan Southwest Airlines for a decrease in price'

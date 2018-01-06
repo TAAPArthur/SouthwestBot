@@ -13,7 +13,7 @@ case "$1" in
         ;;
     checkin)
         shift
-        python southwest.py $@ #Doesn't support names with spaces
+        python southwest.py "$1" "$2" "$3" "$4" # confirmationNumber,firstName, lastName,id
         ;;
     send-message)
         shift

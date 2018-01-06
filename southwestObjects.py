@@ -30,7 +30,7 @@ class Flight:
     def shouldSetCheckinTimer(self,database=None):        
         return (database.convertToLocalTime(self.departureTime,self.origin)-datetime.now()).days==1
     def setCheckinTimer(self,user):
-        setCheckinTimer(self.confirmationNumber, user.firstName, user.lastName,user.id, self.departureTime.strftime("%H%M"))
+        setCheckinTimer(self.confirmationNumber, user.firstName, user.lastName,user.getChatID(), self.departureTime.strftime("%H%M"))
     def __hash__(self):
         return hash(self.getIdentifier())
     def __eq__(self,other):
@@ -73,6 +73,8 @@ class User:
         self.minPrice=float(minPrice)
     def getID(self):
         return self.id
+    def getChatID(self):
+        return self.chatID
     def getTuple(self):
         return self.id, self.username, self.password, self.firstName, self.lastName, self.chatID, self.defaultDeltaStart, self.defaultDeltaEnd, self.priceDelta, self.minPrice
     def __str__(self):
@@ -80,5 +82,6 @@ class User:
     def whoami(self):
         return "username:%s password:%s firstName:%s lastName:%s defaultDeltaStart:%s defaultDeltaEnd:%s priceDelta:%s minPrice:%s" % (self.username, self.password, self.firstName, self.lastName, self.defaultDeltaStart, self.defaultDeltaEnd, self.priceDelta, self.minPrice)
 
-def setCheckinTimer(confirmationNumber,firstName,lastName,time):
-        return system("echo 'southwest-bot checkin %s %s %s %s' | at %s" % (confirmationNumber,firstName,lastName,time))
+def setCheckinTimer(confirmationNumber,firstName,lastName,userID,time):
+
+        return system("echo 'southwest-bot checkin \"%s\" \"%s\" \"%s\" \"%s\"' | at %s" % (confirmationNumber,firstName,lastName,userID,time))
