@@ -1,7 +1,10 @@
 #!/bin/bash
 
 cd "/usr/lib/southwest-bot/"
-mkdir "~/Southwest"
+mkdir -p "~/.config/Southwest"
+logFile="~/Southwest/southwest.log"
+exec > >(tee -i "$logFile")
+exec 2>&1
 case "$1" in 
     scan)
         python southwest.py
