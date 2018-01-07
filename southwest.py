@@ -2,6 +2,8 @@
 import re
 import sys
 import time
+import os
+
 from datetime import datetime,date,timedelta
 import traceback
 from selenium import webdriver
@@ -49,8 +51,9 @@ class SouthwestBot:
             formattedMessage+=str(message[i])
         print (time,formattedMessage, flush=True)
     def screenshot(self,fileName="screenshot.png"):
-        self.output("saving screen shot to ",fileName)
-        self.driver.save_screenshot(fileName)
+        path=os.path.expanduser('~')+"/Southwest"+str(fileName)
+        self.output("saving screen shot to ",path)
+        self.driver.save_screenshot(path)
     def commit(self):
         self.database.commit()
     def close(self):
@@ -77,13 +80,7 @@ class SouthwestBot:
         if self.driver.current_url!=self.checkinPage:
             if id:
                 self.message("checked in to %s %s (%s)" % (firstName,lastName,confirmationNumber),id)
-        self.output(self.driver.current_url)
-        self.screenshot("checkin.png")
-        buttons=self.driver.find_elements_by_xpath("//*[contains(text(), 'Check In')]")
-        for button in buttons:
-            print(button.text)
-        for button in buttons:
-            print(button.click())
+        self.driver.find_element_by_class_name("air-check-in-review-results--check-in-button").click()
         
     def waitForElementToLoad(self,id):
         element_present = EC.presence_of_element_located((By.ID, id))
@@ -302,7 +299,7 @@ class SouthwestBot:
             
         except:
             self.output("Failed to run with %s " % self.user.username)
-            self.screenshot("/home/syncrop/%s.png" % self.user.username)
+            self.screenshot("%s.png" % self.user.username)
             traceback.print_exc()
             #traceback.print_stack()
 

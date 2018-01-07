@@ -1,6 +1,7 @@
 #!/bin/bash
 
 cd "/usr/lib/southwest-bot/"
+mkdir "~/Southwest"
 case "$1" in 
     scan)
         python southwest.py
