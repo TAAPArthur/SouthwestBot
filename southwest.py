@@ -12,11 +12,14 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.support.expected_conditions import _find_element
-
+from selenium.webdriver.firefox.options import Options
 
 from southwestRecords import Records
 from southwestObjects import Flight,User,ScannedFlight
 import southwestMessenger as SM
+
+
+
 
 
 class SouthwestBot:
@@ -28,7 +31,9 @@ class SouthwestBot:
     timeout=20
     
     def __init__(self,database=None,loadCache=False):
-        self.driver = webdriver.PhantomJS(service_log_path="/dev/null",service_args=['--ssl-protocol=any'])
+        options = Options()
+        options.add_argument("--headless")
+        self.driver =  webdriver.Firefox(firefox_options=options)
         self.driver.implicitly_wait(self.timeout)
         self.setUser(None)
         self.database=database

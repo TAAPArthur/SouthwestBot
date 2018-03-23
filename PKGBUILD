@@ -2,14 +2,14 @@
 
 
 pkgname='southwest-bot'
-pkgver='0.9.5'
+pkgver='0.9.6'
 _language='en-US'
 pkgrel=1
 pkgdesc='Scan Southwest Airlines for a decrease in price'
 
 arch=('any')
 license=('MIT')
-depends=('python3' 'python-selenium' 'phantomjs' )
+depends=('python3' 'python-selenium' )
 opt_depends=('python-mysql-connector')
 md5sums=('SKIP')
 

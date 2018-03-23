@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd "/usr/lib/southwest-bot/"
+#cd "/usr/lib/southwest-bot/"
 mkdir -p "~/.config/Southwest"
 logFile="~/Southwest/southwest.log"
 exec > >(tee -i "$logFile")
