@@ -30,7 +30,7 @@ class Flight:
     def shouldSetCheckinTimer(self,database=None):        
         return (database.convertToLocalTime(self.departureTime,self.origin)-datetime.now()).days==1
     def setCheckinTimer(self,user):
-        setCheckinTimer(self.confirmationNumber, user.firstName, user.lastName,user.getChatID(), self.departureTime.strftime("%H%M"))
+        setCheckinTimer(self.confirmationNumber, user.firstName, user.lastName,user.getChatID(), self.departureTime.strftime("%H%M"),self.origin)
     def __hash__(self):
         return hash(self.getIdentifier())
     def __eq__(self,other):
@@ -82,6 +82,14 @@ class User:
     def whoami(self):
         return "username:%s password:%s firstName:%s lastName:%s defaultDeltaStart:%s defaultDeltaEnd:%s priceDelta:%s minPrice:%s" % (self.username, self.password, self.firstName, self.lastName, self.defaultDeltaStart, self.defaultDeltaEnd, self.priceDelta, self.minPrice)
 
-def setCheckinTimer(confirmationNumber,firstName,lastName,userID,time):
+def setCheckinTimer(confirmationNumber,firstName,lastName,userID,time,origin):
+        
+        return system("southwest-bot set-checkin-timer \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" " % (confirmationNumber,firstName,lastName,userID,time,getTimezoneFromAirport(origin)))\"
+        
+def getTimezoneFromAirport(airport):
+    with open("timezones.txt") as f:
+        for line in f:
+            if line.startswith(airport):
+                return line[len(airport)+1:]
+    return "America/Chicago"
 
-        return system("echo 'southwest-bot checkin \"%s\" \"%s\" \"%s\" \"%s\"' | at %s" % (confirmationNumber,firstName,lastName,userID,time))

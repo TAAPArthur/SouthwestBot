@@ -9,7 +9,7 @@ pkgdesc='Scan Southwest Airlines for a decrease in price'
 
 arch=('any')
 license=('MIT')
-depends=('python3' 'python-selenium' )
+depends=('python3' 'python-selenium' 'at' )
 opt_depends=('python-mysql-connector')
 md5sums=('SKIP')
 
@@ -24,8 +24,9 @@ package() {
     mkdir -p "$pkgdir/usr/lib/$pkgname/"
     
     install -D -m 0755 southwest-bot "$pkgdir/usr/bin/"
-    install -D -m 0755 *.py "$pkgdir/usr/lib/$pkgname/"
+    install -D -m 0755 *.py timezones.txt "$pkgdir/usr/lib/$pkgname/" 
     mkdir -p ~/.config/"$pkgname"
+
 
     tokenFile=~/.config/"$pkgname"/token
     echo $tokenFile

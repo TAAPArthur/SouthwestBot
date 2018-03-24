@@ -18,7 +18,7 @@ from southwestRecords import Records
 from southwestObjects import Flight,User,ScannedFlight
 import southwestMessenger as SM
 
-
+TIMEZONE="America/Chicago"
 
 
 
