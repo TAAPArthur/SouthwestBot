@@ -2,10 +2,12 @@
 
 cd "/usr/lib/southwest-bot/"
 configDir="$HOME/.config/Southwest"
-mkdir -p $configDir 
+mkdir -p $configDir
 logFile="$configDir/southwest.log"
 exec > >(tee -i "$logFile")
 exec 2>&1
+
+
 
 getDepartureTime(){
     time=$1
@@ -14,7 +16,7 @@ getDepartureTime(){
     echo $(( currentTimeZone - ( $(TZ=":$timezone" date +%-z ) ) + time))
 }
 
-case "$1" in 
+case "$1" in
     set-checkin-timer)
         shift
         echo southwest-bot checkin \"$1\" \"$2\" \"$3\" \"$4\" | at $(getDepartureTime $5 $6)
