@@ -19,7 +19,9 @@ from southwestObjects import Flight, User, ScannedFlight
 import southwestMessenger as SM
 
 TIMEZONE = "America/Chicago"
+HEADLESS=True
 
+configDir=os.path.expanduser("~/.config/Southwest/")
 
 class SouthwestBot:
     loginPage = "https://www.southwest.com/flight/login"
@@ -31,8 +33,9 @@ class SouthwestBot:
 
     def __init__(self, database=None, loadCache=False):
         options = Options()
-        options.add_argument("--headless")
-        self.driver = webdriver.Firefox(log_path=os.path.expanduser("~/.config/Southwest/geckodriver.log"), firefox_options=options)
+        if HEADLESS:
+            options.add_argument("--headless")
+        self.driver = webdriver.Firefox(log_path=configDir+"geckodriver.log", firefox_options=options)
         self.driver.implicitly_wait(self.timeout)
         self.setUser(None)
         self.database = database
@@ -57,7 +60,7 @@ class SouthwestBot:
         print(time, formattedMessage, flush=True)
 
     def screenshot(self, fileName="screenshot.png"):
-        path = os.path.expanduser('~')+"/Southwest"+str(fileName)
+        path = configDir+str(fileName)
         self.output("saving screen shot to ", path)
         self.driver.save_screenshot(path)
 
@@ -89,9 +92,11 @@ class SouthwestBot:
         self.driver.find_element_by_id("form-mixin--submit-button").click()
         
         self.driver.find_element_by_class_name("air-check-in-review-results--check-in-button").click()
+        self.screenshot();
         if self.driver.current_url != self.checkinPage:
             if id:
-                self.message("checked in to %s %s (%s)" % (firstName, lastName, confirmationNumber), id)
+                self.message("checked in for %s %s (%s)" % (firstName, lastName, confirmationNumber), id)
+        
 
     def waitForElementToLoad(self, id):
         element_present = EC.presence_of_element_located((By.ID, id))
