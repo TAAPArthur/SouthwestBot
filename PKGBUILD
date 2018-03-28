@@ -9,7 +9,7 @@ pkgdesc='Scan Southwest Airlines for a decrease in price'
 
 arch=('any')
 license=('MIT')
-depends=('python3' 'python-selenium' 'at' )
+depends=('python3' 'python-selenium' 'at' 'geckodriver' 'firefox' )
 opt_depends=('python-mysql-connector')
 md5sums=('SKIP')
 

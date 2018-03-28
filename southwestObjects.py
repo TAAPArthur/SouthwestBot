@@ -115,7 +115,7 @@ class User:
 def setCheckinTimer(confirmationNumber, firstName, lastName, userID, time, origin):
     print("southwest-bot set-checkin-timer \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" " %
           (confirmationNumber, firstName, lastName, userID, time, getTimezoneFromAirport(origin)))
-    return system("southwest-bot set-checkin-timer \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" " % (confirmationNumber, firstName, lastName, userID, time, getTimezoneFromAirport(origin)))
+    return system("southwest-bot set-checkin-timer \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" " % (confirmationNumber, firstName, lastName, userID, int(time), getTimezoneFromAirport(origin)))
 
 
 def getTimezoneFromAirport(airport):
