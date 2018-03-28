@@ -87,10 +87,11 @@ class SouthwestBot:
         self.driver.find_element_by_id("passengerFirstName").send_keys(firstName)
         self.driver.find_element_by_id("passengerLastName").send_keys(lastName)
         self.driver.find_element_by_id("form-mixin--submit-button").click()
+        
+        self.driver.find_element_by_class_name("air-check-in-review-results--check-in-button").click()
         if self.driver.current_url != self.checkinPage:
             if id:
                 self.message("checked in to %s %s (%s)" % (firstName, lastName, confirmationNumber), id)
-        self.driver.find_element_by_class_name("air-check-in-review-results--check-in-button").click()
 
     def waitForElementToLoad(self, id):
         element_present = EC.presence_of_element_located((By.ID, id))
@@ -300,8 +301,8 @@ class SouthwestBot:
                 for flight in flights:
                     if flight.shouldSetCheckinTimer(self.database):
                         self.output("Setting timer to check in for %s" % str(flight))
-                        SM.sendMessage("You have an upcoming flight %s" % str(flight), self.user.getChatID())
                         flight.setCheckinTimer(self.user)
+                        SM.sendMessage("You have an upcoming flight %s" % str(flight), self.user.getChatID())
             if scan:
                 self.output("Scanning")
                 for flight in flights:
