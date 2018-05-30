@@ -1,5 +1,5 @@
 import mysql.connector
-from datetime import datetime, date, timedelta
+from datetime import timedelta
 from southwestObjects import Flight, User, ScannedFlight
 
 
@@ -7,6 +7,7 @@ class Records:
 
     def __init__(self):
         self.conn = mysql.connector.connect(user='southwest', database='Southwest')
+
         self.cur = self.conn.cursor(buffered=True)
 
     def setUser(self, user):

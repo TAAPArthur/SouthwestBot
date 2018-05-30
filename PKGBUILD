@@ -2,7 +2,7 @@
 
 
 pkgname='southwest-bot'
-pkgver='0.9.6'
+pkgver='0.9.8.2'
 _language='en-US'
 pkgrel=1
 pkgdesc='Scan Southwest Airlines for a decrease in price'
@@ -25,16 +25,4 @@ package() {
     
     install -D -m 0755 southwest-bot "$pkgdir/usr/bin/"
     install -D -m 0755 *.py timezones.txt "$pkgdir/usr/lib/$pkgname/" 
-    mkdir -p ~/.config/"$pkgname"
-
-
-    tokenFile=~/.config/"$pkgname"/token
-    echo $tokenFile
-    if [[ ! -s $tokenFile ]]; then
-        echo "Please enter your chat token"
-        read t
-        echo $t > "$tokenFile"
-    fi
-    ln -s "$tokenFile" $pkgdir/usr/lib/$pkgname/token
-    
 }

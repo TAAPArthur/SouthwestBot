@@ -1,12 +1,26 @@
 #!/bin/bash
 
+
+
+    
 cd "/usr/lib/southwest-bot/"
 configDir="$HOME/.config/Southwest"
 mkdir -p $configDir
 logFile="$configDir/southwest.log"
+
+
+
 exec > >(tee -i "$logFile")
 exec 2>&1
 
+tokenFile="$configDir/token"
+
+if [[ ! -s $tokenFile ]]; then
+    echo "Please enter your chat token"
+    read t
+    echo $t > "$tokenFile"
+    sudo ln -sf "$tokenFile" /usr/lib/southwest-bot/token
+fi
 
 
 getDepartureTime(){
