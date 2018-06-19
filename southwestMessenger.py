@@ -9,10 +9,7 @@ import threading
 
 from southwestObjects import Flight, User, ScannedFlight, setCheckinTimer
 from southwestRecords import Records
-from southwest import run
-
-
-
+import southwest
 
 from telegram.ext import Updater
 from telegram.ext import CommandHandler
@@ -95,7 +92,7 @@ class SouthwestMessenger:
 
             if user and canScan(user):
                 loadCache = len(args) != 0 and args[0] != "false"
-                run([user], loadCache, scan=True)
+                southwest.run([user], loadCache, scan=True)
                 self.endScan(user)
 
             self.update.message.reply_text("scan complete")
@@ -109,7 +106,7 @@ class SouthwestMessenger:
             user = self.getUser(update)
 
             if user and canScan(user):
-                run([user], loadCache=False, checkForNewPurchases=True, scan=True)
+                southwest.run([user], loadCache=False, checkForNewPurchases=True, scan=True)
                 self.endScan(user)
                 self.update.message.reply_text("Update complete")
 
